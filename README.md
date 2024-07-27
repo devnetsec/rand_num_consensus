@@ -14,7 +14,7 @@ Make sure you have [Rust](https://www.rust-lang.org/learn/get-started) and Cargo
 # Usage
 
 High-level users will be most interested in the `NodeLocal` struct, which automatically handles almost the entire protocol,
-but connections and `Message`s can also be handled manually with `NodeDown` and `NodeUp` (see [`NodeDown`]). The general workflow, for each node, is outlined below.
+but connections and `Message`s can also be handled manually with `NodeDown` and `NodeUp`. The general workflow, for each node, is outlined below.
 
 1. Call `NodeDown::default()` and mutate `identity_key` with a signing key and `address` with a socket address.
 2. Call `NodeLocal::new()` using a signing key, socket address, and the list of offline nodes created in the previous step, except the one that refers
@@ -167,16 +167,16 @@ Several new terms were created to describe unique concepts.
 
 - **Client**: A party not involved in the protocol who requests a random number from a group of nodes. The node then broadcasts an `Initiate` message
 to start the consensus process.
-- **Message**: A unit of communication for the protocol. See [`Message`].
+- **Message**: A unit of communication for the protocol.
 - **Number**: Random bytes or entropy that are returned to the client.
 - **Node**: An instance of the protocol whos identity (public/signing) key is partially trusted by the client.
 - **Ring**: A group of nodes who are typically involved in the same consensuses.
-- **Local Node**: The locally running node instance. See [`NodeLocal`].
-- **Offline/Connected Node**: An object that stores information about other nodes. See [`NodeDown`] and [`NodeUp`].
+- **Local Node**: The locally running node instance.
+- **Offline/Connected Node**: An object that stores information about other nodes.
 - **[`Block`]**
 - **[`List`]**
-- **Consensus**: A number signed by one or more nodes. See [`Consensus`].
-- **Shared Nonce**: Indicates which consensus a block or list belongs to. See [`SharedNonce`].
+- **Consensus**: A number signed by one or more nodes.
+- **Shared Nonce**: Indicates which consensus a block or list belongs to.
 
 # Future Improvements:
 
@@ -189,7 +189,7 @@ to start the consensus process.
 
 **Safety/Security/Correctness/Reliability**
 - [ ] Handle disconnects gracefully
-- [ ] **Write unit tests**
+- [ ] **Write better unit tests**
 - [ ] Add lints
 - [ ] Add safeguards to iterations over indexes, which will panic if length is zero
 - [ ] Support disk caching of shared nonces to make sure they are not repeated
@@ -200,7 +200,7 @@ to start the consensus process.
 - [ ] Use more stack allocation rather than heap allocation
 
 **Clarity**
-- [ ] Make [u8; 32] a type alias with a more descriptive name than `Number`
+- [ ] Make `[u8; 32]` a type alias with a more descriptive name than `Number`
 - [ ] Add more comments
 - [ ] Replace some for loops with iterators for consistency
 - [ ] Remove some unwrap()s (not idiomatic Rust)
@@ -215,7 +215,7 @@ I left some FIXMEs/TODOs/FUTUREs where I couldn't make up my own mind. Some code
 
 # Contact
 
-My contact info, up to date, is available on my GitHub profile: github.com/devnetsec
+My contact info, up to date, is available on my GitHub profile: [github.com/devnetsec](https://github.com/devnetsec)
 
 # Copying
 
