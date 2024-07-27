@@ -1,9 +1,10 @@
 [package]
-name = "rand-num-consensus"
+name = "rand_num_consensus"
 version = "0.1.0"
 edition = "2021"
 authors = ["Dylan Downey"]
-description = "Decentralized, asynchronous random number consensus"
+description = "Decentralized, asynchronous random number consensus (name reservation)"
+repository = "https://github.com/devnetsec/rand_num_consensus"
 license = "MIT OR Apache-2.0"
 keywords = ["random", "consensus", "protocol", "networking", "decentralized"]
 categories = ["network-programming"]
