@@ -157,7 +157,7 @@ Their types are outlined below. Note that `wait_for_consensus()` currently hides
 `Packet`: A packet could not be en/decrypted, (de)serialized, or sent/received. \
 `Broadcast`: There was an error that prevented a full broadcast. There may be multiple of these when calling
 `broadcast()`, and printing all of them may be too verbose. \
-`Reveal`: A reveal key either could not be broadcasted or could not be used to reveal a block. \
+`Reveal`: A reveal key either could not be broadcasted or could not be used to reveal a block.
 
 Errors include a string description and may be nested.
 
@@ -173,8 +173,8 @@ to start the consensus process.
 - **Ring**: A group of nodes who are typically involved in the same consensuses.
 - **Local Node**: The locally running node instance.
 - **Offline/Connected Node**: An object that stores information about other nodes.
-- **[`Block`]**
-- **[`List`]**
+- **Block**: An encrypted, signed random number that can be revealed later.
+- **List**: A signed, unordered list of Blocks.
 - **Consensus**: A number signed by one or more nodes.
 - **Shared Nonce**: Indicates which consensus a block or list belongs to.
 
