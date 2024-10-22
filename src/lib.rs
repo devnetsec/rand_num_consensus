@@ -103,16 +103,16 @@
 //!
 //! }
 //!
-//!   let mut results = Vec::<Option<Consensus>>::new();
-//!   for handle in handles {
-//!      results.push(handle.join().unwrap());
-//!   }
+//! let mut results = Vec::<Option<Consensus>>::new();
+//! for handle in handles {
+//!    results.push(handle.join().unwrap());
+//! }
 //!
-//!   assert_ne!(results[0], None);
-//!   for number in &results {
-//!      assert_eq!(number, &results[0]);
-//!   }
-//!   assert_eq!(results.len(), usize::from(NUM_OF_NODES));
+//! assert_ne!(results[0], None);
+//! for number in &results {
+//!    assert_eq!(number, &results[0]);
+//! }
+//! assert_eq!(results.len(), usize::from(NUM_OF_NODES));
 //! ```
 //!
 //! In an actual usage scenario, nodes should reside on separate machines and not just separate threads.

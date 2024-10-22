@@ -9,7 +9,13 @@ any other single node to manipulate the consensus.
 
 # Getting Started
 
-Make sure you have [Rust](https://www.rust-lang.org/learn/get-started) and Cargo installed. In your project's Cargo.toml, include `rand_num_consensus = { version = "0.10", registry = "rand_num_consensus_git"}` under `[dependencies]` and `rand_num_consensus_git = { index = "https://github.com/devnetsec/rand_num_consensus.git"}` under `[registries]`.
+Make sure you have [Rust](https://www.rust-lang.org/learn/get-started) and Cargo installed. Add this to your `Cargo.toml`:
+```
+[dependencies]
+rand_num_consensus = { git = "https://github.com/devnetsec/rand_num_consensus.git"}
+rand = "0.8.5"
+ed25519-dalek = "=2.1.1"
+```
 
 # Usage
 
@@ -43,78 +49,81 @@ const TIMEOUT: u64 = 45000;
 // a reveal key.
 const MAX_MISSING_LISTS: usize = 0;
 
-// Create a new identifier for this consensus
-let shared_nonce: SharedNonce = rand::random::<[u8; 16]>();
+fn main() {
+   // Create a new identifier for this consensus
+   let shared_nonce: SharedNonce = rand::random::<[u8; 16]>();
 
-let mut nodes = Vec::<(NodeDown, SigningKey)>::new();
-for i in 0..NUM_OF_NODES {
-   // Create some nodes to connect to
-   let mut remote_node: NodeDown = Default::default();
-   let secret_key = SigningKey::from(random::<[u8; 32]>());
-   remote_node.identity_key = secret_key.verifying_key();
-   remote_node.address = format!("127.0.0.1:{:?}", 30017 + i*153)
-      .as_str()
-      .to_socket_addrs()
-      .unwrap()
-      .next()
-      .unwrap();
+   let mut nodes = Vec::<(NodeDown, SigningKey)>::new();
+   for i in 0..NUM_OF_NODES {
+      // Create some nodes to connect to
+      let mut remote_node: NodeDown = Default::default();
+      let secret_key = SigningKey::from(random::<[u8; 32]>());
+      remote_node.identity_key = secret_key.verifying_key();
+      remote_node.address = format!("127.0.0.1:{:?}", 30017 + i*153)
+         .as_str()
+         .to_socket_addrs()
+         .unwrap()
+         .next()
+         .unwrap();
 
-   nodes.push((remote_node, secret_key));
-}
+      nodes.push((remote_node, secret_key));
+   }
 
-// Use threads to simulate different computers
-let mut handles = Vec::<thread::JoinHandle<_>>::new();
-for (i, (node, secret_key)) in nodes.iter().enumerate() {
-   // Remove yourself from the list of offline nodes
-   let mut nodes_wo_self = nodes.clone();
-   let me = nodes_wo_self.remove(i);
-   let nodes_wo_self = nodes_wo_self
-      .iter()
-      .cloned()
-      .map(|(node, secret_key)| node)
-      .collect();
+   // Use threads to simulate different computers
+   let mut handles = Vec::<thread::JoinHandle<_>>::new();
+   for (i, (node, secret_key)) in nodes.iter().enumerate() {
+      // Remove yourself from the list of offline nodes
+      let mut nodes_wo_self = nodes.clone();
+      let me = nodes_wo_self.remove(i);
+      let nodes_wo_self = nodes_wo_self
+         .iter()
+         .cloned()
+         .map(|(node, secret_key)| node)
+         .collect();
 
-   // Start a node on a new thread
-   let mut local_node = NodeLocal::new(secret_key.clone(), node.address(), nodes_wo_self).unwrap();
-   handles.push(thread::spawn(move || {
-      // Take turns connecting to everyone else
-      for j in 0..i {
-         // Accept a connection
-         let errors = local_node.listen();
-      }
-      // Now its your turn
-      let errors = local_node.connect_all();
-      println!("{:?}: Connected.", &local_node.address());
-      // Wait for everyone to connect before beginning the protocol
-      if i == 1 {
-         thread::sleep(Duration::from_millis(10000));
-         let errors = local_node.initiate(&shared_nonce.clone());
+      // Start a node on a new thread
+      let mut local_node = NodeLocal::new(secret_key.clone(), node.address(), nodes_wo_self).unwrap();
+      handles.push(thread::spawn(move || {
+         // Take turns connecting to everyone else
+         for j in 0..i {
+            // Accept a connection
+            let errors = local_node.listen();
+         }
+         // Now its your turn
+         let errors = local_node.connect_all();
+         println!("{:?}: Connected.", &local_node.address());
+         // Wait for everyone to connect before beginning the protocol
+         if i == 1 {
+            thread::sleep(Duration::from_millis(10000));
+            let errors = local_node.initiate(&shared_nonce.clone());
 
-      }
+         }
 
-      println!("{:?}: Waiting for consensus...", &local_node.address());
-      // Process messages
-       let consensus_or_timeout = local_node.wait_for_consensus(TICK_RATE, TIMEOUT, MAX_MISSING_LISTS);
-      if let Some(consensus) = &consensus_or_timeout {
-         println!("{:?}: CONSENSUS: {:?}", &local_node.address(), consensus);
+         println!("{:?}: Waiting for consensus...", &local_node.address());
+         // Process messages
+          let consensus_or_timeout = local_node.wait_for_consensus(TICK_RATE, TIMEOUT, MAX_MISSING_LISTS);
+         if let Some(consensus) = &consensus_or_timeout {
+            println!("{:?}: CONSENSUS: {:?}", &local_node.address(), consensus);
 
-      };
-      return consensus_or_timeout;
+         };
+         return consensus_or_timeout;
 
-   }));
+      }));
 
-}
+   }
 
-  let mut results = Vec::<Option<Consensus>>::new();
-  for handle in handles {
+   let mut results = Vec::<Option<Consensus>>::new();
+   for handle in handles {
      results.push(handle.join().unwrap());
-  }
+   }
 
-  assert_ne!(results[0], None);
-  for number in &results {
+   assert_ne!(results[0], None);
+   for number in &results {
      assert_eq!(number, &results[0]);
-  }
-  assert_eq!(results.len(), usize::from(NUM_OF_NODES));
+   }
+   assert_eq!(results.len(), usize::from(NUM_OF_NODES));
+}
+
 ```
 
 In an actual usage scenario, nodes should reside on separate machines and not just separate threads.
@@ -126,7 +135,7 @@ each node broadcasts their random number choice ("Block")
 to all other nodes, then creates a List of the Blocks they receive: one for each node in their keyring,
 and sign and broadcast that too. Once enough identical lists are collected, each node broadcasts their reveal key
 corresponding to that consensus. Once all the reveal keys are collected, the decrypted arrays are summed by element
-mod 2^8 = 256. The consensus is then signed by each node, and relayed to the client. If all but one node attempts
+mod (2^8). The consensus is then signed by each node, and relayed to the client. If all but one node attempts
 to manipulate the consensus, the "randomness" from that node's block is enough on its own to ensure the "randomness"
 of the consensus. The more signatures on the same consensus, the more confident the client can be that it is indeed random.
 One consequence of this design is that the nodes themselves must be trusted or chosen by random...
@@ -136,10 +145,10 @@ to RequestBlock or RequestList messages. However, this functionality is not impl
 
 # Motivation
 
-Anonymous overlay networks like Tor or i2p permit clients to choose their own onion route. The client can only be
+Anonymous overlay networks like Tor or i2p permit clients and servers to choose their own onion circuits. The client or server can only be
 deanonymised if all of these nodes are malicious and coinciding. This works well for clearnet resources, but if the
-server also wishes to remain anonymous, then they must choose their own route to be reachable from. For Tor onion sites,
-this is 6 nodes total. If there was a trusted source of entropy (randomness), then both the client and server could use the
+server also wishes to remain anonymous, then they must choose their own circuit to be reachable from. For Tor onion sites,
+this means there are 6 nodes total between server and client. If there was a trusted source of entropy (randomness), then both the client and server could use the
 same 3 nodes, with the same chance of being deanonymised. Previous work, like the [TorPath protocol](https://dedis.cs.yale.edu/dissent/papers/hotpets14-torpath.pdf),
 requires zero-knowledge proofs with poor performance and implementation.
 
